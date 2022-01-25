@@ -14,9 +14,21 @@ class ChaptersController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        // https://laracasts.com/discuss/channels/eloquent/all-vs-get-laravel-eloquent
+        // get all data / filter data
+        
+        if ($request->query('course_id')) {
+            $chapters = Chapters::where('course_id', $request->query('course_id'))->get();            
+        } else {
+            $chapters = Chapters::all();
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $chapters
+        ], 200);
     }
 
     /**
@@ -74,7 +86,17 @@ class ChaptersController extends Controller
      */
     public function show($id)
     {
-        //
+        $chapter = Chapters::find($id);
+        if (!$chapter) {
+            return response()->json([
+                'status' => false,
+                'message' => 'chapter not found'
+            ], 404);
+        }
+        return response()->json([
+            'status' => true,
+            'data' => $chapter
+        ], 200);
     }
 
     /**
@@ -98,8 +120,8 @@ class ChaptersController extends Controller
     public function update(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string',
-            'course_id' => 'required|integer',
+            'name' => 'string',
+            'course_id' => 'integer',
         ]);
 
         if ($validator->fails()) {
@@ -118,6 +140,17 @@ class ChaptersController extends Controller
             ], 404);
         }
 
+        if ($request->input('course_id')) {
+            $course = Courses::find($request->input('course_id'));
+
+            if (!$course) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'course not found'
+                ], 404);
+            }
+        }
+
         $chapter->update($request->all());
     
         return response()->json([
@@ -134,6 +167,20 @@ class ChaptersController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $chapter = Chapters::find($id);
+
+        if (!$chapter) {
+            return response()->json([
+                'status' => false,
+                'message' => 'chapter not found'
+            ], 404);
+        }
+
+        $chapter->delete();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'chapter deleted'
+        ], 200);
     }
 }
